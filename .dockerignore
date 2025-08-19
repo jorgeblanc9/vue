@@ -1,0 +1,7 @@
+app/node_modules
+app/.git
+app/.env.local
+app/dist
+*.log
+.git
+node_modules

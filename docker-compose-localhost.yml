@@ -1,0 +1,53 @@
+services:
+  app:
+    image: node:20-alpine
+    container_name: "vite-vue-dev-local"
+    working_dir: /app
+    restart: unless-stopped
+    ports:
+      - "5174:5173" # Puerto Vite dinámico
+      - "24679:24678" # Puerto HMR dinámico
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      # Bind mounts para desarrollo en tiempo real
+      - ./app:/app
+      # Excluir node_modules para rendimiento
+      - node_modules:/app/node_modules
+      # Caché de Vite persistente
+      - vite_cache:/app/.vite
+    environment:
+      # Variables para desarrollo estable en Docker
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=5173
+      - VITE_HMR_PORT=24678
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    networks:
+      - microservices-network
+    labels:
+      - "com.portafolio.project=vue"
+      - "com.portafolio.type=project"
+      - "com.portafolio.main-service=true"
+      - "com.portafolio.auto-sleep=true"
+      - "com.portafolio.framework=vite"
+      - "com.portafolio.mode=development"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - dev
+
+volumes:
+  node_modules:
+    name: "vue_node_modules_prod"
+  vite_cache:
+    name: "vue_vite_cache_prod"
+
+networks:
+  microservices-network:
+    external: true
+    name: "microservices-network"
