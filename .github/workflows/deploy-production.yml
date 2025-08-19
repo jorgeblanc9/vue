@@ -1,0 +1,80 @@
+name: Deploy Vue App (Production)
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build production image
+      run: |
+        # Construir imagen de producción
+        docker build -f Dockerfile-vite -t vue-app:production .
+        
+        # Verificar que la imagen se construyó correctamente
+        docker images vue-app:production
+        
+    - name: Deploy production container
+      run: |
+        # Parar contenedor anterior si existe
+        docker stop vue-app-production || true
+        docker rm vue-app-production || true
+        
+        # Ejecutar contenedor de producción
+        docker run -d \
+          --name vue-app-production \
+          --network microservices-network \
+          -p 8080:80 \
+          --restart unless-stopped \
+          vue-app:production
+        
+        # Esperar a que el servicio esté listo
+        echo "Esperando a que el servicio de producción esté listo..."
+        timeout=60
+        counter=0
+        while [ $counter -lt $timeout ]; do
+          if curl -f http://localhost:8080/health >/dev/null 2>&1; then
+            echo "✅ Servicio de producción está listo en http://localhost:8080"
+            break
+          fi
+          echo "⏳ Esperando servicio de producción... ($counter/$timeout)"
+          sleep 2
+          counter=$((counter + 2))
+        done
+        
+        if [ $counter -ge $timeout ]; then
+          echo "❌ Timeout esperando el servicio de producción"
+          docker logs vue-app-production
+          exit 1
+        fi
+        
+        # Verificar endpoints
+        echo "🔍 Verificando endpoints..."
+        curl -f http://localhost:8080/ || exit 1
+        curl -f http://localhost:8080/health || exit 1
+        curl -f http://localhost:8080/build-info || exit 1
+        
+        echo "✅ Deploy de producción completado exitosamente"
+        
+    - name: Show production status
+      run: |
+        echo "📊 Estado del contenedor de producción:"
+        docker ps | grep vue-app-production
+        
+        echo "📋 Logs del servicio de producción:"
+        docker logs --tail=20 vue-app-production
+        
+        echo "🌐 Servicio de producción disponible en: http://localhost:8080"
+        echo "🏥 Health check: http://localhost:8080/health"
+        echo "ℹ️  Build info: http://localhost:8080/build-info"

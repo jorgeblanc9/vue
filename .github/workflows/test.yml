@@ -1,0 +1,68 @@
+name: Test Vue App
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: app/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd app
+        npm ci
+        
+    - name: Run tests
+      run: |
+        cd app
+        # Verificar que el proyecto se puede construir
+        npm run build
+        
+        # Verificar que el servidor de desarrollo se puede iniciar
+        timeout 30s npm run dev &
+        sleep 10
+        
+        # Verificar que responde
+        curl -f http://localhost:5173/ || exit 1
+        
+        # Parar el servidor
+        pkill -f "npm run dev" || true
+        
+    - name: Docker build test
+      run: |
+        # Verificar que el Dockerfile se puede construir
+        docker build -f Dockerfile-vite -t vue-app:test .
+        
+        # Verificar que el contenedor se puede ejecutar
+        docker run --rm -d --name vue-test -p 8081:80 vue-app:test
+        
+        # Esperar y verificar
+        sleep 10
+        curl -f http://localhost:8081/ || exit 1
+        curl -f http://localhost:8081/health || exit 1
+        
+        # Limpiar
+        docker stop vue-test
+        docker rmi vue-app:test
+        
+    - name: Docker Compose test
+      run: |
+        # Verificar que docker-compose funciona
+        docker-compose -f docker-compose-localhost.yml config
+        
+        echo "✅ Todos los tests pasaron correctamente"
