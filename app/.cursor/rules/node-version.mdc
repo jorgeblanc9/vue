@@ -1,0 +1,236 @@
+# Node.js Version Management Rules
+
+## Version Control
+- **Always use the Node.js version specified in `.nvmrc`**
+- **Current version**: 22.18.0 (as defined in `.nvmrc`)
+- **Never use global Node.js versions without checking `.nvmrc`**
+
+## Required Commands
+
+### Before Any Node.js Operation
+Always run these commands before executing any Node.js related operations:
+
+```bash
+# Load nvm and use the correct version
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# Verify the correct version is active
+node --version
+```
+
+### Package Management
+When installing packages or running npm/yarn commands:
+
+```bash
+# Always ensure correct Node version first
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# Then run npm commands
+npm install
+npm run dev
+npm run test
+```
+
+## Makefile Integration
+All Makefile targets must include Node.js version management:
+
+```makefile
+target-name:
+	export NVM_DIR="$$HOME/.nvm" && [ -s "$$NVM_DIR/nvm.sh" ] && \. "$$NVM_DIR/nvm.sh" && nvm use
+	# Your actual commands here
+	npm run dev
+```
+
+## Version Verification
+
+### Check Current Version
+```bash
+# Should always return: v22.18.0
+node --version
+
+# Should show the .nvmrc file content
+cat .nvmrc
+```
+
+### Troubleshooting
+If wrong version is active:
+```bash
+# Force reload nvm and use correct version
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# Or manually specify the version
+nvm use 22.18.0
+```
+
+## Development Workflow
+
+### Starting Development
+```bash
+# 1. Navigate to project directory
+cd /path/to/project
+
+# 2. Ensure correct Node version
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# 3. Install dependencies
+npm install
+
+# 4. Start development
+npm run dev
+```
+
+### Running Tests
+```bash
+# 1. Ensure correct Node version
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# 2. Run tests
+npm run test:run
+```
+
+### Building Project
+```bash
+# 1. Ensure correct Node version
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# 2. Build project
+npm run build
+```
+
+## CI/CD Integration
+
+### GitHub Actions Example
+```yaml
+name: Build and Test
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm ci
+      - run: npm run test:run
+      - run: npm run build
+```
+
+### Local Development Scripts
+Create a development script that ensures correct Node version:
+
+```bash
+#!/bin/bash
+# dev.sh
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+npm run dev
+```
+
+## Common Issues and Solutions
+
+### Issue: Wrong Node Version Active
+**Symptoms**: Package installation errors, version conflicts
+**Solution**: 
+```bash
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+```
+
+### Issue: nvm not found
+**Symptoms**: `nvm: command not found`
+**Solution**: 
+```bash
+# Load nvm manually
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm use
+```
+
+### Issue: Version not installed
+**Symptoms**: `N/A version is not installed`
+**Solution**: 
+```bash
+# Install the required version
+nvm install 22.18.0
+nvm use 22.18.0
+```
+
+## Environment Setup
+
+### Shell Configuration
+Add to your `.bashrc` or `.zshrc`:
+```bash
+# Auto-load nvm and use project version
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# Auto-use .nvmrc when entering directory
+autoload -U add-zsh-hook
+load-nvmrc() {
+  local nvmrc_path="$(nvm_find_nvmrc)"
+  if [ -n "$nvmrc_path" ]; then
+    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+    if [ "$nvmrc_node_version" = "N/A" ]; then
+      nvm install
+    elif [ "$nvmrc_node_version" != "$(nvm version)" ]; then
+      nvm use
+    fi
+  elif [ -n "$(PWD=$OLDPWD nvm_find_nvmrc)" ] && [ "$(nvm version)" != "$(nvm version default)" ]; then
+    nvm use default
+  fi
+}
+add-zsh-hook chpwd load-nvmrc
+load-nvmrc
+```
+
+## Version Compatibility
+
+### Current Project Requirements
+- **Node.js**: 22.18.0 (as per `.nvmrc`)
+- **npm**: Compatible with Node.js 22.18.0
+- **Dependencies**: All compatible with Node.js 22.18.0
+
+### Version Matrix
+| Tool | Required Version | Compatible Versions |
+|------|------------------|-------------------|
+| Node.js | 22.18.0 | 22.x.x |
+| npm | Latest | 10.x.x+ |
+| Vite | 7.1.2 | 7.x.x |
+| Vue | 3.5.18 | 3.x.x |
+
+## Best Practices
+
+### Always Verify Version
+```bash
+# Before any operation
+node --version
+npm --version
+```
+
+### Use Makefile Commands
+Prefer using Makefile commands that include version management:
+```bash
+make run      # Includes nvm use
+make test     # Includes nvm use
+make build    # Includes nvm use
+```
+
+### Check Version in Scripts
+When creating scripts, always include version check:
+```bash
+#!/bin/bash
+# Ensure correct Node version
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+
+# Verify version
+if [ "$(node --version)" != "v22.18.0" ]; then
+    echo "Error: Wrong Node.js version. Expected v22.18.0"
+    exit 1
+fi
+
+# Continue with script
+npm run dev
+```
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,142 @@
+# Documentation Standards
+
+## Node.js Version Management
+**IMPORTANT**: Always ensure correct Node.js version before any development work:
+```bash
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use
+```
+
+## Documentation Location
+- **All documentation must be stored in the `docs/` directory**
+- **Never create documentation files in the root directory**
+- **Use consistent naming conventions for documentation files**
+
+## Documentation Structure
+
+### Required Documentation Files
+```
+docs/
+├── README.md                    # Project overview and quick start
+├── project-architecture.md      # Technical architecture documentation
+├── testing-strategy.md          # Testing approach and guidelines
+├── TESTING.md                   # Testing implementation guide
+├── vitest-setup-summary.md      # Vitest configuration summary
+├── development-guide.md         # Development workflow and standards
+├── deployment-guide.md          # Deployment and CI/CD documentation
+└── api-documentation.md         # API documentation (when applicable)
+```
+
+## Documentation Standards
+
+### File Naming Conventions
+- **Use kebab-case for file names**: `project-architecture.md`
+- **Use descriptive names**: `testing-strategy.md` not `test.md`
+- **Use consistent extensions**: Always `.md` for markdown files
+
+### Content Standards
+- **Always include a title and description**
+- **Use proper markdown formatting**
+- **Include table of contents for long documents**
+- **Add timestamps for last updates**
+- **Reference related documentation files**
+
+### Documentation Types
+
+#### 1. Project Documentation
+- **Location**: `docs/project-architecture.md`
+- **Purpose**: Technical architecture and project structure
+- **Audience**: Developers and technical stakeholders
+
+#### 2. Testing Documentation
+- **Location**: `docs/testing-strategy.md` and `docs/TESTING.md`
+- **Purpose**: Testing approach and implementation guides
+- **Audience**: Developers and QA team
+
+#### 3. Development Guides
+- **Location**: `docs/development-guide.md`
+- **Purpose**: Development workflow and coding standards
+- **Audience**: Development team
+
+#### 4. Deployment Documentation
+- **Location**: `docs/deployment-guide.md`
+- **Purpose**: Deployment procedures and CI/CD
+- **Audience**: DevOps and deployment teams
+
+## Documentation Maintenance
+
+### Update Frequency
+- **Architecture docs**: Update when major changes occur
+- **Testing docs**: Update when testing strategy changes
+- **Development guides**: Update with new standards or tools
+- **Deployment docs**: Update with new deployment procedures
+
+### Version Control
+- **All documentation must be version controlled**
+- **Include documentation changes in commit messages**
+- **Review documentation changes in pull requests**
+
+## Documentation References
+
+### Cross-References
+When referencing other documentation files, use relative paths:
+```markdown
+See [Project Architecture](project-architecture.md) for technical details.
+Refer to [Testing Strategy](testing-strategy.md) for testing guidelines.
+```
+
+### External References
+When linking to external resources, use descriptive text:
+```markdown
+- [Vue 3 Documentation](https://vuejs.org/)
+- [Vite Documentation](https://vitejs.dev/)
+- [Vitest Documentation](https://vitest.dev/)
+```
+
+## Documentation Templates
+
+### Standard Document Template
+```markdown
+# Document Title
+
+## Overview
+Brief description of the document's purpose and scope.
+
+## Table of Contents
+- [Section 1](#section-1)
+- [Section 2](#section-2)
+- [Section 3](#section-3)
+
+## Section 1
+Content for section 1.
+
+## Section 2
+Content for section 2.
+
+## Section 3
+Content for section 3.
+
+## Related Documentation
+- [Related Doc 1](related-doc-1.md)
+- [Related Doc 2](related-doc-2.md)
+
+---
+
+*Last updated: [Date]*
+```
+
+## Documentation Tools
+
+### Recommended Tools
+- **Markdown editors**: VS Code with markdown extensions
+- **Documentation generators**: VuePress, VitePress (for larger projects)
+- **Diagram tools**: Mermaid, PlantUML (for architecture diagrams)
+
+### Documentation Quality
+- **Spell check all documentation**
+- **Review for clarity and completeness**
+- **Ensure all links work correctly**
+- **Keep documentation up to date with code changes**
+description:
+globs:
+alwaysApply: false
+---
