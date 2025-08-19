@@ -61,17 +61,18 @@ FROM nginx:1.25-alpine AS production
 # Instalar curl para health checks
 RUN apk add --no-cache curl
 
-# Copiar configuración de Nginx
+# Copiar configuraciones de Nginx
 COPY nginx-vite.conf /etc/nginx/conf.d/default.conf
+COPY nginx-non-root.conf /etc/nginx/nginx.conf
 
 # Verificar que el build existe y copiarlo
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Verificar que los archivos fueron copiados correctamente
 RUN if [ ! -f "/usr/share/nginx/html/index.html" ]; then \
-        echo "Error: No se encontró index.html en el build" && \
-        ls -la /usr/share/nginx/html && \
-        exit 1; \
+    echo "Error: No se encontró index.html en el build" && \
+    ls -la /usr/share/nginx/html && \
+    exit 1; \
     fi
 
 # Crear endpoint de health check
@@ -80,7 +81,32 @@ RUN echo '{"status":"healthy","service":"vite-app","timestamp":"'$(date -Isecond
 # Crear endpoint de información del build
 RUN echo '{"framework":"vite","build_time":"'$(date -Iseconds)'","nginx_version":"'$(nginx -v 2>&1 | cut -d' ' -f3)'"}' > /usr/share/nginx/html/build-info
 
-# Configurar permisos
+# Crear script de entrypoint personalizado
+RUN cat > /docker-entrypoint.sh << 'EOF'
+#!/bin/sh
+set -e
+
+echo "Iniciando Nginx con build de Vite..."
+
+# Crear directorios necesarios con permisos apropiados
+mkdir -p /tmp/nginx /var/cache/nginx /var/log/nginx
+touch /tmp/nginx/nginx.pid
+
+# Configurar permisos para nginx user
+chown -R nginx:nginx /usr/share/nginx/html /tmp/nginx /var/cache/nginx /var/log/nginx
+chmod -R 755 /usr/share/nginx/html
+
+# Verificar configuración de Nginx
+nginx -t
+
+# Iniciar Nginx
+exec nginx -g 'daemon off;'
+EOF
+
+# Hacer el script ejecutable
+RUN chmod +x /docker-entrypoint.sh
+
+# Configurar permisos iniciales
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
@@ -90,11 +116,8 @@ RUN echo "Build completado. Archivos disponibles:" && \
     echo "Tamaño total del build:" && \
     du -sh /usr/share/nginx/html/
 
-# Usuario no-root
-USER nginx
-
 # Exponer puerto 80
 EXPOSE 80
 
-# Comando para producción con verificación
-CMD ["sh", "-c", "echo 'Iniciando Nginx con build de Vite...' && nginx -t && nginx -g 'daemon off;'"]
+# Usar el entrypoint personalizado
+ENTRYPOINT ["/docker-entrypoint.sh"]
